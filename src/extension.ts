@@ -1,6 +1,24 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as indentor from './indenter';
+
+export class EraIndentProvider implements vscode.DocumentFormattingEditProvider {
+	public provideDocumentFormattingEdits(document: vscode.TextDocument, options: vscode.FormattingOptions, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TextEdit[]> {
+		const hoge = new indentor.EraIndenter(options);
+		const ret: vscode.TextEdit[] = [];
+		for (let lineNo = 0; lineNo < document.lineCount; lineNo++) {
+			const line: vscode.TextLine = document.lineAt(lineNo);
+			const result = hoge.update(line);
+			// 仮 エラーが起きても次の行を読めるようにうまいことやる
+			if (result instanceof Error) {
+				throw result;
+			}
+			result.forEach(ns => ret.push(vscode.TextEdit.replace(document.lineAt(ns.lineNumber).range, ns.text)));
+		}
+		return ret;
+	}
+}
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed

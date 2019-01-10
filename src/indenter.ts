@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 
 enum LineState {
     // 何らかの理由でインデントしない
@@ -59,10 +58,10 @@ type ParseState = ParseNormal | ParseComment | ParseConnectStart | ParseConnect 
 type IndentState = {
     readonly indentDepth: number,
     readonly parseState: ParseState,
-    readonly options: vscode.FormattingOptions
+    readonly options: EraIndentorOptions,
 };
 
-const makeIndentState = (o: vscode.FormattingOptions, i: number = 0, p: ParseState = { kind: "Normal" }): IndentState => {
+const makeIndentState = (o: EraIndentorOptions, i: number = 0, p: ParseState = { kind: "Normal" }): IndentState => {
     return { indentDepth: i, parseState: p, options: o };
 };
 
@@ -86,31 +85,32 @@ function isNormalState(state: IndentState): state is NormalIndentState {
 }
 
 // vscode.TextLineから必要な部分だけ取り出すおまじない
-interface Line {
+export interface Line {
     readonly lineNumber: number;
     readonly text: string;
-    readonly range: vscode.Range;
 }
 
-export class EraIndenter implements vscode.DocumentFormattingEditProvider {
-    public provideDocumentFormattingEdits(document: vscode.TextDocument, options: vscode.FormattingOptions, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TextEdit[]> {
-        let state = makeIndentState(options);
-        let ret: vscode.TextEdit[] = [];
-        for (let lineNo = 0; lineNo < document.lineCount; lineNo++) {
-            const line: vscode.TextLine = document.lineAt(lineNo);
-            const result: [Line[], IndentState] | Error = update(line, state);
-            // 仮 エラーが起きても次の行を読めるようにうまいことやる
-            if (result instanceof Error) {
-                throw result;
-            }
-            result[0].forEach(ns => ret.push(vscode.TextEdit.replace(ns.range, ns.text)));
-            state = result[1];
+//vscode.FormattingOptionsに依存しないおまじない
+export interface EraIndentorOptions {
+    readonly tabSize: number;
+    readonly insertSpaces: boolean;
+}
+
+export class EraIndenter {
+    state: IndentState;
+    constructor(option: EraIndentorOptions) {
+        this.state = makeIndentState(option);
+    }
+    update(line: Line): Line[] | Error {
+        const result = update(line, this.state);
+        if (result instanceof Error) {
+            return result;
         }
-        // 汚い
-        // this.disposeState(ret, state);
-        return ret;
+        this.state = result[1];
+        return result[0];
     }
 }
+
 
 function update(line: Line, state: IndentState): [Line[], IndentState] | Error {
     // todo:ここでConnectFirstが帰って来た時、同時にその行の意味する内容も表示されないと困る
@@ -220,12 +220,12 @@ function setIndents(line: Line, lineState: LineState, state: IndentState): Line[
     }
     const rowString: string = trimSpace(line.text);
     const newString: string = setIndent(rowString, depth, state);
-    ret.push({ lineNumber: line.lineNumber, text: newString, range: line.range });
+    ret.push({ lineNumber: line.lineNumber, text: newString });
     if (state.parseState.kind === "ConnectStart") {
         const line = state.parseState.line;
         const rowString: string = trimSpace(line.text);
         const newString: string = setIndent(rowString, depth - (lineState === LineState.ConnectEnd ? 0 : 1), state);
-        ret.push({ lineNumber: line.lineNumber, text: newString, range: line.range });
+        ret.push({ lineNumber: line.lineNumber, text: newString });
     }
     return ret;
 }
@@ -302,7 +302,7 @@ function trimSpace(text: string): string {
     return text.trimLeft();
 }
 
-function setIndent(line: string, newIndent: number, state: { options: vscode.FormattingOptions }): string {
+function setIndent(line: string, newIndent: number, state: { options: EraIndentorOptions }): string {
     return (state.options.insertSpaces ? "\s".repeat(state.options.tabSize) : "\t").repeat(newIndent);
 }
 
