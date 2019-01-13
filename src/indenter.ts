@@ -1,9 +1,8 @@
-
-enum LineState {
+export enum LineState {
     // 何らかの理由でインデントしない
     Empty = 1,
     // 普通の行はインデントが増減しない
-    None,
+    Normal,
     // コメント行も増減しないけどSIFで普通の行と区別する
     Comment,
     // 関数宣言行はインデント0固定
@@ -32,40 +31,40 @@ enum LineState {
     CommentEnd,
 }
 
-interface ParseNormal {
+export interface ParseNormal {
     readonly kind: "Normal";
 }
-interface ParseComment {
+export interface ParseComment {
     readonly kind: "Comment";
     readonly isInSif: boolean;
 }
-interface ParseConnectStart {
+export interface ParseConnectStart {
     readonly kind: "ConnectStart";
     readonly line: Line;
     readonly isInSif: boolean;
 }
-interface ParseConnect {
+export interface ParseConnect {
     readonly kind: "Connect";
     readonly lineState: LineState;
     readonly isInSif: boolean;
 }
-interface ParseSif {
+export interface ParseSif {
     readonly kind: "Sif";
 }
 
-type ParseState = ParseNormal | ParseComment | ParseConnectStart | ParseConnect | ParseSif;
+export type ParseState = ParseNormal | ParseComment | ParseConnectStart | ParseConnect | ParseSif;
 
-type IndentState = {
+export type IndentState = {
     readonly indentDepth: number,
     readonly parseState: ParseState,
     readonly options: EraIndentorOptions,
 };
 
-const makeIndentState = (o: EraIndentorOptions, i: number = 0, p: ParseState = { kind: "Normal" }): IndentState => {
+export const makeIndentState = (o: EraIndentorOptions, i: number = 0, p: ParseState = { kind: "Normal" }): IndentState => {
     return { indentDepth: i, parseState: p, options: o };
 };
 
-const updateIndentState = (s: IndentState, u: Partial<IndentState>): IndentState => {
+export const updateIndentState = (s: IndentState, u: Partial<IndentState>): IndentState => {
     // uに指定したプロパティがあったらそっちの値を返す 名づけが思いつかない
     const func = <T extends keyof IndentState>(fun: T): IndentState[T] => {
         const tes: IndentState[T] | undefined = u[fun];
@@ -78,9 +77,9 @@ const updateIndentState = (s: IndentState, u: Partial<IndentState>): IndentState
 };
 
 // todo:どう考えてもクソなやり方
-type NormalIndentState = { readonly parseState: ParseNormal } & IndentState;
+export type NormalIndentState = { readonly parseState: ParseNormal } & IndentState;
 
-function isNormalState(state: IndentState): state is NormalIndentState {
+export function isNormalState(state: IndentState): state is NormalIndentState {
     return state.parseState.kind === "Normal";
 }
 
@@ -90,7 +89,7 @@ export interface Line {
     readonly text: string;
 }
 
-//vscode.FormattingOptionsに依存しないおまじない
+// vscode.FormattingOptionsに依存しないおまじない
 export interface EraIndentorOptions {
     readonly tabSize: number;
     readonly insertSpaces: boolean;
@@ -112,7 +111,7 @@ export class EraIndenter {
 }
 
 
-function update(line: Line, state: IndentState): [Line[], IndentState] | Error {
+export function update(line: Line, state: IndentState): [Line[], IndentState] | Error {
     // todo:ここでConnectFirstが帰って来た時、同時にその行の意味する内容も表示されないと困る
     const lineState: LineState = getLineState(line.text, state);
     const resultStrings: Line[] | Error = setIndents(line, lineState, state);
@@ -126,23 +125,23 @@ function update(line: Line, state: IndentState): [Line[], IndentState] | Error {
     return [resultStrings, nextState];
 }
 
-const ups = "(?:DATALIST|DO|FOR|IF|NOSKIP|PRINTDATA(?:K|D)?(?:L|W)?|REPEAT|STRDATA|TRY(?:CALL|GOTO|JUMP)LIST|TRYC(?:CALL|GOTO|JUMP)(?:FORM)?|WHILE)";
-const downs = "(?:END(?:CATCH|DATA|FUNC|IF|LIST|NOSKIP)|LOOP|NEXT|REND|WEND)";
-const downUps = "(?:ELSE(IF)?|CASE(?:ELSE)?|CATCH)";
-const selectCase = "SELECTCASE";
-const endCase = "ENDSELECT";
-const sif = "SIF";
-const connectStart = String.raw`{\s*$`;
-const connectEnd = String.raw`}\s*$`;
-const commentStart = "[SKIPSTART]";
-const commentEnd = "[SKIPEND]";
-const comment = ";(?![!?];)";
-const none = String.raw`\S+`;
-const _function = "@";
-const leftSpaces = String.raw`\s*(?:;[!?];)?\s*`;
-const makeReg = (i: string) => new RegExp(leftSpaces + i);
+export const ups = "(?:DATALIST|DO|FOR|IF|NOSKIP|PRINTDATA(?:K|D)?(?:L|W)?|REPEAT|STRDATA|TRY(?:CALL|GOTO|JUMP)LIST|TRYC(?:CALL|GOTO|JUMP)(?:FORM)?|WHILE)";
+export const downs = "(?:END(?:CATCH|DATA|FUNC|IF|LIST|NOSKIP)|LOOP|NEXT|REND|WEND)";
+export const downUps = "(?:ELSE(IF)?|CASE(?:ELSE)?|CATCH)";
+export const selectCase = "SELECTCASE";
+export const endCase = "ENDSELECT";
+export const sif = "SIF";
+export const connectStart = String.raw`{\s*$`;
+export const connectEnd = String.raw`}\s*$`;
+export const commentStart = "[SKIPSTART]";
+export const commentEnd = "[SKIPEND]";
+export const comment = ";(?![!?];)";
+export const none = String.raw`\S+`;
+export const _function = "@";
+export const leftSpaces = String.raw`\s*(?:;[!?];)?\s*`;
+export const makeReg = (i: string) => new RegExp(leftSpaces + i);
 
-function getLineState(line: string, state: { parseState: ParseState }): LineState {
+export function getLineState(line: string, state: { parseState: ParseState }): LineState {
     // todo:なんかおかしい気がするから後で再確認する
     switch (state.parseState.kind) {
         case "Normal":
@@ -160,7 +159,7 @@ function getLineState(line: string, state: { parseState: ParseState }): LineStat
     }
 }
 
-function getLineStateNormal(line: string): LineState {
+export function getLineStateNormal(line: string): LineState {
     const func = (i: string) => makeReg(i).test(line);
     //雑
     if (func(ups)) {
@@ -200,12 +199,12 @@ function getLineStateNormal(line: string): LineState {
         return LineState.Function;
     }
     else if (func(none)) {
-        return LineState.None;
+        return LineState.Normal;
     }
     return LineState.Empty;
 }
 
-function setIndents(line: Line, lineState: LineState, state: IndentState): Line[] | Error {
+export function setIndents(line: Line, lineState: LineState, state: IndentState): Line[] | Error {
     let ret: Line[] = [];
     let depth: number | null | Error = getNewIndent(lineState, state);
     if (depth === null) {
@@ -215,9 +214,7 @@ function setIndents(line: Line, lineState: LineState, state: IndentState): Line[
         depth.message += `\rsetIndents(line:${line}, lineState:${lineState}, state:${state}`;
         return depth;
     }
-    if (depth < 0) {
-        depth = 0;
-    }
+    depth = Math.max(depth, 0);
     const rowString: string = trimSpace(line.text);
     const newString: string = setIndent(rowString, depth, state);
     ret.push({ lineNumber: line.lineNumber, text: newString });
@@ -231,7 +228,7 @@ function setIndents(line: Line, lineState: LineState, state: IndentState): Line[
 }
 
 // todo:本来はあり得ないことにインデントがマイナスの場合を返すことがある
-function getNewIndent(lineState: LineState, state: { indentDepth: number, parseState: ParseState }): number | null | Error {
+export function getNewIndent(lineState: LineState, state: { indentDepth: number, parseState: ParseState }): number | null | Error {
     const isInSif = (state: { parseState: ParseState }) => state.parseState.kind === "Sif" || (state.parseState.kind === "ConnectStart" || state.parseState.kind === "Connect") && state.parseState.isInSif;
 
     const indent = state.indentDepth + (isInSif(state) ? 1 : 0);
@@ -262,7 +259,7 @@ function getNewIndent(lineState: LineState, state: { indentDepth: number, parseS
     }
 }
 
-function getNewIndentNormal(lineState: LineState): (indent: number) => number | null | Error {
+export function getNewIndentNormal(lineState: LineState): (indent: number) => number | null | Error {
     switch (lineState) {
         // 空行はインデント0へ
         case LineState.Empty:
@@ -271,7 +268,7 @@ function getNewIndentNormal(lineState: LineState): (indent: number) => number | 
         case LineState.Comment:
             return _ => null;
         // 普通の行はインデントが変わらない
-        case LineState.None:
+        case LineState.Normal:
         // インデントを増やすときは次の行から
         case LineState.Up:
         case LineState.SelectCase:
@@ -298,15 +295,15 @@ function getNewIndentNormal(lineState: LineState): (indent: number) => number | 
     }
 }
 
-function trimSpace(text: string): string {
+export function trimSpace(text: string): string {
     return text.trimLeft();
 }
 
-function setIndent(line: string, newIndent: number, state: { options: EraIndentorOptions }): string {
+export function setIndent(line: string, newIndent: number, state: { options: EraIndentorOptions }): string {
     return (state.options.insertSpaces ? "\s".repeat(state.options.tabSize) : "\t").repeat(newIndent);
 }
 
-function getNextState(line: Line, lineState: LineState, state: IndentState): IndentState | Error {
+export function getNextState(line: Line, lineState: LineState, state: IndentState ): IndentState | Error {
     switch (state.parseState.kind) {
         case "Normal":
             // 型推論が無限に有能ならばここは当然isNormalStateであることを推論できるはずだけどできないので手書きする
@@ -348,7 +345,7 @@ function getNextState(line: Line, lineState: LineState, state: IndentState): Ind
         case "Connect":
             if (lineState === LineState.ConnectEnd) {
                 const normalState = updateIndentState(state, { parseState: { kind: "Normal" } });
-                // ここも"Normal"と同じ
+                // ここもは頑張れば推論できるかもしれないけどめんどくさいから"Normal"と同じ方法で頑張る
                 if (isNormalState(normalState)) {
                     return getNextStateNormal(line, state.parseState.lineState, normalState);
                 }
@@ -391,10 +388,10 @@ function getNextState(line: Line, lineState: LineState, state: IndentState): Ind
     }
 }
 
-function getNextStateNormal(line: Line, lineState: LineState, state: NormalIndentState): IndentState | Error {
+export function getNextStateNormal(line: Line, lineState: LineState, state: NormalIndentState): IndentState | Error {
     switch (lineState) {
         case LineState.Empty:
-        case LineState.None:
+        case LineState.Normal:
         case LineState.Comment:
         case LineState.DownUp:
             return state;
