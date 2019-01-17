@@ -1,6 +1,6 @@
 export enum LineState {
     // 何らかの理由でインデントしない
-    Empty = 1,
+    Empty,
     // 普通の行はインデントが増減しない
     Normal,
     // コメント行も増減しないけどSIFで普通の行と区別する
@@ -16,7 +16,7 @@ export enum LineState {
     // いろいろ実装できるだろうけどとりあえず2個インデントする
     SelectCase,
     // 2個インデント外す
-    EndCase,
+    EndSelect,
     // 次の行だけインデントする
     Sif,
     // 行連結の開始行
@@ -54,11 +54,11 @@ export interface ParseSif {
 
 export type ParseState = ParseNormal | ParseComment | ParseConnectStart | ParseConnect | ParseSif;
 
-export type IndentState = {
-    readonly indentDepth: number,
-    readonly parseState: ParseState,
-    readonly options: EraIndentorOptions,
-};
+export interface IndentState {
+    readonly indentDepth: number;
+    readonly parseState: ParseState;
+    readonly options: EraIndentorOptions;
+}
 
 export const makeIndentState = (o: EraIndentorOptions, i: number = 0, p: ParseState = { kind: "Normal" }): IndentState => {
     return { indentDepth: i, parseState: p, options: o };
@@ -77,7 +77,12 @@ export const updateIndentState = (s: IndentState, u: Partial<IndentState>): Inde
 };
 
 // todo:どう考えてもクソなやり方
-export type NormalIndentState = { readonly parseState: ParseNormal } & IndentState;
+// 後日の追記だから存在意義が全く分からないんだけど 多分型レベルでNormalが来ることを保証したかった
+export interface NormalIndentState {
+    readonly indentDepth: number;
+    readonly parseState: ParseNormal;
+    readonly options: EraIndentorOptions;
+}
 
 export function isNormalState(state: IndentState): state is NormalIndentState {
     return state.parseState.kind === "Normal";
@@ -127,19 +132,19 @@ export function update(line: Line, state: IndentState): [Line[], IndentState] | 
 
 export const ups = "(?:DATALIST|DO|FOR|IF|NOSKIP|PRINTDATA(?:K|D)?(?:L|W)?|REPEAT|STRDATA|TRY(?:CALL|GOTO|JUMP)LIST|TRYC(?:CALL|GOTO|JUMP)(?:FORM)?|WHILE)";
 export const downs = "(?:END(?:CATCH|DATA|FUNC|IF|LIST|NOSKIP)|LOOP|NEXT|REND|WEND)";
-export const downUps = "(?:ELSE(IF)?|CASE(?:ELSE)?|CATCH)";
+export const downUps = "(?:ELSE(?:IF)?|CASE(?:ELSE)?|CATCH)";
 export const selectCase = "SELECTCASE";
 export const endCase = "ENDSELECT";
 export const sif = "SIF";
 export const connectStart = String.raw`{\s*$`;
 export const connectEnd = String.raw`}\s*$`;
-export const commentStart = "[SKIPSTART]";
-export const commentEnd = "[SKIPEND]";
+export const commentStart = String.raw`\[SKIPSTART\]`;
+export const commentEnd = String.raw`\[SKIPEND\]`;
 export const comment = ";(?![!?];)";
 export const none = String.raw`\S+`;
 export const _function = "@";
-export const leftSpaces = String.raw`\s*(?:;[!?];)?\s*`;
-export const makeReg = (i: string) => new RegExp(leftSpaces + i);
+export const leftSpaces = String.raw`^\s*(?:;[!?];)?\s*`;
+export const makeReg = (i: string) => new RegExp(leftSpaces + "(?:" + i + ")");
 
 export function getLineState(line: string, state: { parseState: ParseState }): LineState {
     // todo:なんかおかしい気がするから後で再確認する
@@ -175,7 +180,7 @@ export function getLineStateNormal(line: string): LineState {
         return LineState.SelectCase;
     }
     else if (func(endCase)) {
-        return LineState.EndCase;
+        return LineState.EndSelect;
     }
     else if (func(sif)) {
         return LineState.Sif;
@@ -279,7 +284,7 @@ export function getNewIndentNormal(lineState: LineState): (indent: number) => nu
         case LineState.Down:
         case LineState.DownUp:
             return i => i - 1;
-        case LineState.EndCase:
+        case LineState.EndSelect:
             return i => i - 2;
         // 行連結の最初の行は外側でうまい感じにこなす
         case LineState.ConnectStart:
@@ -300,7 +305,7 @@ export function trimSpace(text: string): string {
 }
 
 export function setIndent(line: string, newIndent: number, state: { options: EraIndentorOptions }): string {
-    return (state.options.insertSpaces ? "\s".repeat(state.options.tabSize) : "\t").repeat(newIndent);
+    return (state.options.insertSpaces ? "\s".repeat(state.options.tabSize) : "\t").repeat(newIndent) + line;
 }
 
 export function getNextState(line: Line, lineState: LineState, state: IndentState ): IndentState | Error {
@@ -345,7 +350,7 @@ export function getNextState(line: Line, lineState: LineState, state: IndentStat
         case "Connect":
             if (lineState === LineState.ConnectEnd) {
                 const normalState = updateIndentState(state, { parseState: { kind: "Normal" } });
-                // ここもは頑張れば推論できるかもしれないけどめんどくさいから"Normal"と同じ方法で頑張る
+                // ここはNormalIndentStateを手書きすれば必要ないけどめんどくさいから"Normal"と同じ方法で頑張る
                 if (isNormalState(normalState)) {
                     return getNextStateNormal(line, state.parseState.lineState, normalState);
                 }
@@ -376,7 +381,7 @@ export function getNextState(line: Line, lineState: LineState, state: IndentStat
                 case LineState.DownUp:
                 case LineState.Sif:
                 case LineState.SelectCase:
-                case LineState.EndCase:
+                case LineState.EndSelect:
                 case LineState.Function:
                     return new Error("SIFの次の行で別のブロックを作ったり壊したりは禁止で警告なんだけど未実装");
                 default:
@@ -403,7 +408,7 @@ export function getNextStateNormal(line: Line, lineState: LineState, state: Norm
             return updateIndentState(state, { indentDepth: state.indentDepth - 1 });
         case LineState.SelectCase:
             return updateIndentState(state, { indentDepth: state.indentDepth + 2 });
-        case LineState.EndCase:
+        case LineState.EndSelect:
             return updateIndentState(state, { indentDepth: state.indentDepth - 2 });
         case LineState.Sif:
             return updateIndentState(state, { parseState: { kind: "Sif" } });
