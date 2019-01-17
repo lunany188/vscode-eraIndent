@@ -100,14 +100,27 @@ export interface EraIndentorOptions {
     readonly insertSpaces: boolean;
 }
 
+// 読み取れない行のエラー出力のために最低限用意
+export interface EraIndenterError {
+    readonly kind: "EraIndenterError";
+    readonly lineNumber: number;
+    readonly message: string;
+}
+export const makeEraIndenterError = (line: number, message: string): EraIndenterError => {
+    return { kind: "EraIndenterError", lineNumber: line, message: message };
+};
+export function isEraIndenterError(object: any): object is EraIndenterError {
+    return 'kind' in object && object.kind === "EraIndenterError";
+}
+
 export class EraIndenter {
     state: IndentState;
     constructor(option: EraIndentorOptions) {
         this.state = makeIndentState(option);
     }
-    update(line: Line): Line[] | Error {
+    update(line: Line): Line[] | EraIndenterError {
         const result = update(line, this.state);
-        if (result instanceof Error) {
+        if (isEraIndenterError(result)) {
             return result;
         }
         this.state = result[1];
@@ -115,16 +128,12 @@ export class EraIndenter {
     }
 }
 
-
-export function update(line: Line, state: IndentState): [Line[], IndentState] | Error {
+export function update(line: Line, state: IndentState): [Line[], IndentState] | EraIndenterError {
     // todo:ここでConnectFirstが帰って来た時、同時にその行の意味する内容も表示されないと困る
     const lineState: LineState = getLineState(line.text, state);
-    const resultStrings: Line[] | Error = setIndents(line, lineState, state);
-    if (resultStrings instanceof Error) {
-        return resultStrings;
-    }
-    const nextState: IndentState | Error = getNextState(line, lineState, state);
-    if (nextState instanceof Error) {
+    const resultStrings: Line[] = setIndents(line, lineState, state);
+    const nextState: IndentState | EraIndenterError = getNextState(line, lineState, state);
+    if (isEraIndenterError(nextState)) {
         return nextState;
     }
     return [resultStrings, nextState];
@@ -209,15 +218,11 @@ export function getLineStateNormal(line: string): LineState {
     return LineState.Empty;
 }
 
-export function setIndents(line: Line, lineState: LineState, state: IndentState): Line[] | Error {
+export function setIndents(line: Line, lineState: LineState, state: IndentState): Line[] {
     let ret: Line[] = [];
-    let depth: number | null | Error = getNewIndent(lineState, state);
+    let depth: number | null = getNewIndent(lineState, state);
     if (depth === null) {
         return [];
-    }
-    if (depth instanceof Error) {
-        depth.message += `\rsetIndents(line:${line}, lineState:${lineState}, state:${state}`;
-        return depth;
     }
     depth = Math.max(depth, 0);
     const rowString: string = trimSpace(line.text);
@@ -233,7 +238,7 @@ export function setIndents(line: Line, lineState: LineState, state: IndentState)
 }
 
 // todo:本来はあり得ないことにインデントがマイナスの場合を返すことがある
-export function getNewIndent(lineState: LineState, state: { indentDepth: number, parseState: ParseState }): number | null | Error {
+export function getNewIndent(lineState: LineState, state: { indentDepth: number, parseState: ParseState }): number | null {
     const isInSif = (state: { parseState: ParseState }) => state.parseState.kind === "Sif" || (state.parseState.kind === "ConnectStart" || state.parseState.kind === "Connect") && state.parseState.isInSif;
 
     const indent = state.indentDepth + (isInSif(state) ? 1 : 0);
@@ -264,7 +269,7 @@ export function getNewIndent(lineState: LineState, state: { indentDepth: number,
     }
 }
 
-export function getNewIndentNormal(lineState: LineState): (indent: number) => number | null | Error {
+export function getNewIndentNormal(lineState: LineState): (indent: number) => number | null {
     switch (lineState) {
         // 空行はインデント0へ
         case LineState.Empty:
@@ -289,10 +294,11 @@ export function getNewIndentNormal(lineState: LineState): (indent: number) => nu
         // 行連結の最初の行は外側でうまい感じにこなす
         case LineState.ConnectStart:
             return _ => null;
-        case LineState.ConnectEnd:
+        // どうせ後でエラーを返すけどこっちでやると面倒だから何もしない
         case LineState.Connect:
+        case LineState.ConnectEnd:
         case LineState.CommentEnd:
-            return _ => { return new Error("こいつらがここで呼ばれるわけがない"); };
+            return _ => null;
         case LineState.CommentStart:
             return _ => 0;
         default:
@@ -308,7 +314,7 @@ export function setIndent(line: string, newIndent: number, state: { options: Era
     return (state.options.insertSpaces ? "\s".repeat(state.options.tabSize) : "\t").repeat(newIndent) + line;
 }
 
-export function getNextState(line: Line, lineState: LineState, state: IndentState ): IndentState | Error {
+export function getNextState(line: Line, lineState: LineState, state: IndentState): IndentState | EraIndenterError {
     switch (state.parseState.kind) {
         case "Normal":
             // 型推論が無限に有能ならばここは当然isNormalStateであることを推論できるはずだけどできないので手書きする
@@ -342,7 +348,7 @@ export function getNextState(line: Line, lineState: LineState, state: IndentStat
                     }
                 // 行連結が2重になることはない
                 case LineState.ConnectStart:
-                    throw new Error("行連結中に{を入れたら警告だけど未実装");
+                    return makeEraIndenterError(line.lineNumber, "行連結ブロックの中に{が出現してはいけません");
                 // そうじゃないなら行連結の中身が決定した状態になる
                 default:
                     return updateIndentState(state, { parseState: { kind: "Connect", lineState: lineState, isInSif: state.parseState.isInSif } });
@@ -355,7 +361,7 @@ export function getNextState(line: Line, lineState: LineState, state: IndentStat
                     return getNextStateNormal(line, state.parseState.lineState, normalState);
                 }
                 else {
-                    return new Error("ここが呼び出されるわけがない");
+                    throw new Error("ここが呼び出されるわけがない");
                 }
             }
             return state;
@@ -373,8 +379,9 @@ export function getNextState(line: Line, lineState: LineState, state: IndentStat
                     return updateIndentState(state, { parseState: { kind: "ConnectStart", line: line, isInSif: true } });
                 // SIFのあとが何らかのブロックの終端にはならない
                 case LineState.CommentEnd:
+                    return makeEraIndenterError(line.lineNumber, "対応する[SKIPSTART]のない[SKIPEND]です");
                 case LineState.ConnectEnd:
-                    return new Error("SIFの次の行がコメントや行連結の終端になることは警告なんだけど未実装");
+                    return makeEraIndenterError(line.lineNumber, "対応する{のない}です");
                 // SIFのあとが何らかのブロックになったりしない
                 case LineState.Up:
                 case LineState.Down:
@@ -382,8 +389,9 @@ export function getNextState(line: Line, lineState: LineState, state: IndentStat
                 case LineState.Sif:
                 case LineState.SelectCase:
                 case LineState.EndSelect:
+                    return makeEraIndenterError(line.lineNumber, "SIFの次の行でブロックを作る命令は使えません");
                 case LineState.Function:
-                    return new Error("SIFの次の行で別のブロックを作ったり壊したりは禁止で警告なんだけど未実装");
+                    return updateIndentState(state, { indentDepth: 0, parseState: { kind: "Normal" } });
                 default:
                     return updateIndentState(state, { parseState: { kind: "Normal" } });
             }
@@ -393,7 +401,7 @@ export function getNextState(line: Line, lineState: LineState, state: IndentStat
     }
 }
 
-export function getNextStateNormal(line: Line, lineState: LineState, state: NormalIndentState): IndentState | Error {
+export function getNextStateNormal(line: Line, lineState: LineState, state: NormalIndentState): IndentState | EraIndenterError {
     switch (lineState) {
         case LineState.Empty:
         case LineState.Normal:
@@ -417,10 +425,13 @@ export function getNextStateNormal(line: Line, lineState: LineState, state: Norm
         case LineState.CommentStart:
             return updateIndentState(state, { parseState: { kind: "Comment", isInSif: false } });
         case LineState.Connect:
-            return new Error("ここは、この拡張のために独自に用意された分類なのでここに来ることはない");
+            throw new Error("ここは、この拡張のために独自に用意された分類なのでここに来ることはない はず");
         case LineState.ConnectEnd:
         case LineState.CommentEnd:
-            return new Error("警告を出すべきだけど未実装");
+        case LineState.CommentEnd:
+            return makeEraIndenterError(line.lineNumber, "対応する[SKIPSTART]のない[SKIPEND]です");
+        case LineState.ConnectEnd:
+            return makeEraIndenterError(line.lineNumber, "対応する{のない}です");
         default:
             //ここにたどり着くわけがない
             return lineState;
