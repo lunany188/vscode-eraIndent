@@ -115,14 +115,20 @@ export function isEraIndenterError(object: any): object is EraIndenterError {
 
 export class EraIndenter {
     state: IndentState;
+    previous: IndentState;
+    get newLine() {
+        return getNextNewLine(this.previous);
+    }
     constructor(option: EraIndentorOptions) {
         this.state = makeIndentState(option);
+        this.previous = this.state;
     }
     update(line: Line): Line[] | EraIndenterError {
         const result = update(line, this.state);
         if (isEraIndenterError(result)) {
             return result;
         }
+        this.previous = this.state;
         this.state = result[1];
         return result[0];
     }
@@ -435,5 +441,33 @@ export function getNextStateNormal(line: Line, lineState: LineState, state: Norm
         default:
             //ここにたどり着くわけがない
             return lineState;
+    }
+}
+
+export const IndentTriggerCharacters = ((arr: string[]) => arr.concat(arr.map(ar => ar.toLowerCase())))(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]).concat(["}", "]", "\n"]);
+
+export const getNextNewLine = (state: IndentState) => {
+    const indent = getNextNewLineIndent(state)
+    if (indent === null) {
+        return null;
+    }
+    return setIndent("", indent, state);
+}
+
+export const getNextNewLineIndent = (state: IndentState) => {
+    const indent = state.indentDepth;
+    switch (state.parseState.kind) {
+        case "Normal":
+            return indent;
+        case "Sif":
+            return indent + 1;
+        case "Comment":
+            return null;
+        case "ConnectStart":
+            return indent + 1 + (state.parseState.isInSif ? 1 : 0);
+        case "Connect":
+            return indent + 2 + (state.parseState.isInSif ? 1 : 0);
+        default:
+            return state.parseState;
     }
 }

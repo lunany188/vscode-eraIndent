@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import * as indentor from './indenter';
 
-export class EraIndentProvider implements vscode.DocumentFormattingEditProvider, vscode.DocumentRangeFormattingEditProvider, vscode.OnTypeFormattingEditProvider{
+export class EraIndentProvider implements vscode.DocumentFormattingEditProvider, vscode.DocumentRangeFormattingEditProvider, vscode.OnTypeFormattingEditProvider {
     private diagonostics: vscode.DiagnosticCollection;
     constructor(diagnostics: vscode.DiagnosticCollection) {
         this.diagonostics = diagnostics;
@@ -17,9 +17,16 @@ export class EraIndentProvider implements vscode.DocumentFormattingEditProvider,
         const endline = range.end.line;
         return this.innnerFormat(document, endline, indenter);
     }
-    provideOnTypeFormattingEdits(document: vscode.TextDocument, position: vscode.Position, ch: string, options: vscode.FormattingOptions, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TextEdit[]>{
+    provideOnTypeFormattingEdits(document: vscode.TextDocument, position: vscode.Position, ch: string, options: vscode.FormattingOptions, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TextEdit[]> {
         const indenter = new indentor.EraIndenter(options);
-        const result = this.innnerFormat(document, position.line, indenter);
+        const result = this.innnerFormat(document, position.line + 1, indenter);
+        if (ch === "\n") {
+            const newLine = indenter.newLine;
+            if (newLine !== null) {
+                const range = new vscode.Range(position, position);
+                result.push(vscode.TextEdit.replace(range, "" + newLine));
+            }
+        }
         return result;
     }
 
@@ -64,4 +71,4 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }
