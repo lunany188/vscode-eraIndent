@@ -24,7 +24,8 @@ export class EraIndentProvider implements vscode.DocumentFormattingEditProvider,
             const newLine = indenter.newLine;
             if (newLine !== null) {
                 const range = new vscode.Range(position, position);
-                result.push(vscode.TextEdit.replace(range, "" + newLine));
+                result.push(vscode.TextEdit.replace(range, "" + newLine[0]));
+                newLine[1].forEach(ns => result.push(vscode.TextEdit.replace(document.lineAt(ns.lineNumber).range, ns.text)));
             }
         }
         return result;

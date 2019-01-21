@@ -231,13 +231,11 @@ export function setIndents(line: Line, lineState: LineState, state: IndentState)
         return [];
     }
     depth = Math.max(depth, 0);
-    const rowString: string = trimSpace(line.text);
-    const newString: string = setIndent(rowString, depth, state);
+    const newString: string = setIndent(line.text, depth, state);
     ret.push({ lineNumber: line.lineNumber, text: newString });
     if (state.parseState.kind === "ConnectStart") {
         const line = state.parseState.line;
-        const rowString: string = trimSpace(line.text);
-        const newString: string = setIndent(rowString, depth - (lineState === LineState.ConnectEnd ? 0 : 1), state);
+        const newString: string = setIndent(line.text, depth - (lineState === LineState.ConnectEnd ? 0 : 1), state);
         ret.push({ lineNumber: line.lineNumber, text: newString });
     }
     return ret;
@@ -266,8 +264,8 @@ export function getNewIndent(lineState: LineState, state: { indentDepth: number,
                 return getNewIndentNormal(state.parseState.lineState)(indent + 2);
             }
             return getNewIndentNormal(state.parseState.lineState)(indent);
+        // sifかどうかはindentで分岐している
         case "Normal":
-            return func(indent);
         case "Sif":
             return func(indent);
         default:
@@ -298,6 +296,7 @@ export function getNewIndentNormal(lineState: LineState): (indent: number) => nu
         case LineState.EndSelect:
             return i => i - 2;
         // 行連結の最初の行は外側でうまい感じにこなす
+        // todo:仮のインデントをつけておいた方がいいのでは?
         case LineState.ConnectStart:
             return _ => null;
         // どうせ後でエラーを返すけどこっちでやると面倒だから何もしない
@@ -317,7 +316,7 @@ export function trimSpace(text: string): string {
 }
 
 export function setIndent(line: string, newIndent: number, state: { options: EraIndentorOptions }): string {
-    return (state.options.insertSpaces ? "\s".repeat(state.options.tabSize) : "\t").repeat(newIndent) + line;
+    return (state.options.insertSpaces ? "\s".repeat(state.options.tabSize) : "\t").repeat(newIndent) + trimSpace(line);
 }
 
 export function getNextState(line: Line, lineState: LineState, state: IndentState): IndentState | EraIndenterError {
@@ -446,28 +445,23 @@ export function getNextStateNormal(line: Line, lineState: LineState, state: Norm
 
 export const IndentTriggerCharacters = ((arr: string[]) => arr.concat(arr.map(ar => ar.toLowerCase())))(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]).concat(["}", "]", "\n"]);
 
-export const getNextNewLine = (state: IndentState) => {
-    const indent = getNextNewLineIndent(state)
+export const getNextNewLine = (state: IndentState): [string, Line[]] | null => {
+    const indent = getNextNewLineIndent(state);
     if (indent === null) {
         return null;
     }
-    return setIndent("", indent, state);
-}
-
-export const getNextNewLineIndent = (state: IndentState) => {
-    const indent = state.indentDepth;
-    switch (state.parseState.kind) {
-        case "Normal":
-            return indent;
-        case "Sif":
-            return indent + 1;
-        case "Comment":
-            return null;
-        case "ConnectStart":
-            return indent + 1 + (state.parseState.isInSif ? 1 : 0);
-        case "Connect":
-            return indent + 2 + (state.parseState.isInSif ? 1 : 0);
-        default:
-            return state.parseState;
+    // この場合だけ行連結の開始行のLineもかえす
+    if (state.parseState.kind === "ConnectStart") {
+        const line = state.parseState.line;
+        const startLineIndent = getNewIndent(LineState.Normal, state);
+        if (startLineIndent === null) {
+            // 実際にはここは呼び出されない
+            throw new Error();
+        }
+        const startLine: Line = { lineNumber: line.lineNumber, text: setIndent(line.text, startLineIndent - 1, state) };
+        return [setIndent("", indent, state), [startLine]];
     }
-}
+    return [setIndent("", indent, state), []];
+};
+
+export const getNextNewLineIndent = (state: IndentState): number | null => getNewIndent(LineState.Normal, state);
