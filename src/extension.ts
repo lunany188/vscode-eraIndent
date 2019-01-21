@@ -65,10 +65,10 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(diagnostics);
     const provider = new EraIndentProvider(diagnostics);
 
-    const test = vscode.languages.registerDocumentRangeFormattingEditProvider(eraSelector, provider);
-    context.subscriptions.push(test);
-    const test2 = vscode.languages.registerOnTypeFormattingEditProvider(eraSelector, provider, "\n");
-    context.subscriptions.push(test2);
+    const rangeFormatter = vscode.languages.registerDocumentRangeFormattingEditProvider(eraSelector, provider);
+    context.subscriptions.push(rangeFormatter);
+    const onTypeFormatter = vscode.languages.registerOnTypeFormattingEditProvider(eraSelector, provider, "\n");
+    context.subscriptions.push(onTypeFormatter);
 }
 
 // this method is called when your extension is deactivated
