@@ -158,7 +158,7 @@ export const commentEnd = String.raw`\[SKIPEND\]`;
 export const comment = ";(?![!?];)";
 export const none = String.raw`\S+`;
 export const _function = "@";
-export const leftSpaces = String.raw`^\s*(?:;[!?];)?\s*`;
+export const leftSpaces = String.raw`^\s*(?:;[!#];)?\s*`;
 export const makeReg = (i: string) => new RegExp(leftSpaces + "(?:" + i + ")");
 
 export function getLineState(line: string, state: { parseState: ParseState }): LineState {
@@ -464,4 +464,10 @@ export const getNextNewLine = (state: IndentState): [string, Line[]] | null => {
     return [setIndent("", indent, state), []];
 };
 
-export const getNextNewLineIndent = (state: IndentState): number | null => getNewIndent(LineState.Normal, state);
+export const getNextNewLineIndent = (state: IndentState): number | null => {
+    // 行連結中は行が空行でもインデントを0リセットしないことになってるため特別な処理は不要
+    if (state.parseState.kind === "Connect") {
+        return null;
+    }
+    return getNewIndent(LineState.Normal, state);
+};
