@@ -5,6 +5,15 @@
 	"version": "0.0.1",
 	"publisher": "lunany188",
 	"license": "CC0-1.0",
+	"homepage": "https://github.com/lunany188/eraIndent/blob/master/README.md",
+	"bugs": {
+		"url": "https://github.com/lunany188/eraIndent/issues",
+		"email": "lunany188@gmail.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/lunany188/eraIndent.git"
+	},
 	"engines": {
 		"vscode": "^1.30.0"
 	},
