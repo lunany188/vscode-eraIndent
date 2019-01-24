@@ -321,7 +321,7 @@ export function trimSpace(text: string): string {
 }
 
 export function setIndent(line: string, newIndent: number, state: { options: EraIndentorOptions }): string {
-    return (state.options.insertSpaces ? "\s".repeat(state.options.tabSize) : "\t").repeat(newIndent) + trimSpace(line);
+    return (state.options.insertSpaces ? " ".repeat(state.options.tabSize) : "\t").repeat(newIndent) + trimSpace(line);
 }
 
 export function getNextState(line: Line, lineState: LineState, state: IndentState): IndentState | EraIndenterError {
