@@ -162,9 +162,27 @@ export const commentStart = String.raw`\[SKIPSTART\]`;
 export const commentEnd = String.raw`\[SKIPEND\]`;
 export const comment = ";(?![!#];)";
 export const none = String.raw`\S+`;
-export const _function = "@";
+export const _function = "@" + none;
 export const leftSpaces = String.raw`^\s*(?:;[!#];)?\s*`;
-export const makeReg = (i: string) => new RegExp(leftSpaces + "(?:" + i + ")");
+// 単語区切りを表現できる文字を選んだつもり 命令と関数宣言のぶんだけ認知できればいいため最小限
+export const wordend = String.raw`(?:(?= |;|\()|$)`;
+//hack:今までのやり方だと単語区切りを認識せず変数名冒頭が命令とかぶったら誤反応していたため修正
+//     したはいいけど細かい処理をこの関数につめ込んだため明らかに不自然なよくない処理と化した
+//     きちんと作り直すべき
+export const makeReg = (i: string) => {
+    let ret = i;
+    switch (i) {
+        case connectStart:
+        case connectEnd:
+        case commentStart:
+        case commentEnd:
+        case comment:
+            break;
+        default:
+            ret = "(?:" + i + ")" + wordend;
+    }
+    return new RegExp(leftSpaces + "(?:" + ret + ")");
+};
 
 export function getLineState(line: string, state: { parseState: ParseState }): LineState {
     // todo:なんかおかしい気がするから後で再確認する
