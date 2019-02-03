@@ -20,9 +20,7 @@ This extension requires "sasami.erabasic", erabasic language extention.
 
 ## Release Notes
 
-### 0.0.1
-
-Initial release of Perpetual Beta
+See CHANGELOG.
 
 ## License
 
