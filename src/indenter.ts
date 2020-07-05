@@ -194,7 +194,7 @@ export const none = String.raw`\S+`;
 export const _function = "@" + none;
 export const leftSpaces = String.raw`^\s*(?:;[!#];)?\s*`;
 // 単語区切りを表現できる文字を選んだつもり 命令と関数宣言のぶんだけ認知できればいいため最小限
-export const wordend = String.raw`(?:(?= |;|\()|$)`;
+export const wordend = String.raw`(?:(?=\s|;|\()|$)`;
 //hack:今までのやり方だと単語区切りを認識せず変数名冒頭が命令とかぶったら誤反応していたため修正
 //     したはいいけど細かい処理をこの関数につめ込んだため明らかに不自然なよくない処理と化した
 //     きちんと作り直すべき
