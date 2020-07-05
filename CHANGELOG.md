@@ -5,6 +5,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.3.0] - 2020-07-05
+the version number conforms to the SemVer update code.
+Version 0.2.0 was lost due to operation mistake.
+
 ## [0.1.3] - 2020-07-05
 ### Fixed
 - Fixed trailing tab bug.
