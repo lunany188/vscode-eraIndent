@@ -5,6 +5,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.1.3] - 2020-07-05
+### Fixed
+- Fixed trailing tab bug.
+
 ## [0.1.2] - 2019-02-03
 ### Fixed
 - Fixed that there are cases in which comments do not match correctly.
