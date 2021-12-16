@@ -22,7 +22,8 @@ export class EraIndentProvider
     options: vscode.FormattingOptions,
     token: vscode.CancellationToken
   ): vscode.ProviderResult<vscode.TextEdit[]> {
-    const indenter = new indentor.EraIndenter(options);
+    const config = vscode.workspace.getConfiguration("eraindent");
+    const indenter = new indentor.EraIndenter(options, config);
     return this.innnerFormat(
       document,
       document.lineAt(document.lineCount - 1).range.end.line,
@@ -35,7 +36,8 @@ export class EraIndentProvider
     options: vscode.FormattingOptions,
     token: vscode.CancellationToken
   ): vscode.ProviderResult<vscode.TextEdit[]> {
-    const indenter = new indentor.EraIndenter(options);
+    const config = vscode.workspace.getConfiguration("eraindent");
+    const indenter = new indentor.EraIndenter(options, config);
     const endline = range.end.line;
     return this.innnerFormat(document, endline, indenter);
   }
@@ -46,7 +48,8 @@ export class EraIndentProvider
     options: vscode.FormattingOptions,
     token: vscode.CancellationToken
   ): vscode.ProviderResult<vscode.TextEdit[]> {
-    const indenter = new indentor.EraIndenter(options);
+    const config = vscode.workspace.getConfiguration("eraindent");
+    const indenter = new indentor.EraIndenter(options, config);
     const result = this.innnerFormat(document, position.line + 1, indenter);
     if (ch === "\n") {
       const newLine = indenter.newLine;
