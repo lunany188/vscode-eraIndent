@@ -46,5 +46,17 @@
 		"prettier": "^2.0.5",
 		"typescript": "^3.9.5",
 		"vscode": "^1.1.37"
+	},
+	"contributes": {
+		"configuration":{
+			"title": "eraindent",
+			"properties": {
+				"eraindent.indentCommentRow":{
+					"default":false,
+					"type":"boolean",
+					"description": "Enable to indent at comment row. The context of comments is ignored and follows the indentation in the code."
+				}
+			}
+		}
 	}
 }

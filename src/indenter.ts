@@ -68,34 +68,28 @@ export interface IndentState {
   readonly indentDepth: number;
   readonly parseState: ParseState;
   readonly options: EraIndentorOptions;
+  readonly indentCommentRow: boolean;
 }
 
 export const makeIndentState = (
   o: EraIndentorOptions,
+  c: EraIndenterConfig,
   i: number = 0,
   p: ParseState = { kind: "Normal" }
 ): IndentState => {
-  return { indentDepth: i, parseState: p, options: o };
+  return {
+    indentDepth: i,
+    parseState: p,
+    options: o,
+    indentCommentRow: c.get("indentCommentRow", false),
+  };
 };
 
 export const updateIndentState = (
   s: IndentState,
   u: Partial<IndentState>
 ): IndentState => {
-  // uに指定したプロパティがあったらそっちの値を返す 名づけが思いつかない
-  const func = <T extends keyof IndentState>(fun: T): IndentState[T] => {
-    const tes = u[fun];
-    if (tes !== undefined) {
-      // hack:汚いキャスト
-      return tes as IndentState[T];
-    }
-    return s[fun];
-  };
-  return makeIndentState(
-    func("options"),
-    func("indentDepth"),
-    func("parseState")
-  );
+  return Object.assign({}, s, u);
 };
 
 // todo:どう考えてもクソなやり方
@@ -104,6 +98,7 @@ export interface NormalIndentState {
   readonly indentDepth: number;
   readonly parseState: ParseNormal;
   readonly options: EraIndentorOptions;
+  readonly indentCommentRow: boolean;
 }
 
 export function isNormalState(state: IndentState): state is NormalIndentState {
@@ -144,8 +139,8 @@ export class EraIndenter {
   get newLine() {
     return getNextNewLine(this.previous);
   }
-  constructor(option: EraIndentorOptions) {
-    this.state = makeIndentState(option);
+  constructor(option: EraIndentorOptions, config: EraIndenterConfig) {
+    this.state = makeIndentState(option, config);
     this.previous = this.state;
   }
   update(line: Line): Line[] | EraIndenterError {
@@ -295,7 +290,11 @@ export function setIndents(
 // todo:本来はあり得ないことにインデントがマイナスの場合を返すことがある
 export function getNewIndent(
   lineState: LineState,
-  state: { indentDepth: number; parseState: ParseState }
+  state: {
+    indentDepth: number;
+    parseState: ParseState;
+    indentCommentRow: boolean;
+  }
 ): number | null {
   const isInSif = (state: { parseState: ParseState }) =>
     state.parseState.kind === "Sif" ||
@@ -305,7 +304,7 @@ export function getNewIndent(
 
   const indent = state.indentDepth + (isInSif(state) ? 1 : 0);
 
-  const func = getNewIndentNormal(lineState);
+  const func = getNewIndentNormal(lineState, state);
   switch (state.parseState.kind) {
     case "Comment":
       if (lineState !== LineState.CommentEnd) {
@@ -319,9 +318,12 @@ export function getNewIndent(
       return func(indent + 1);
     case "Connect":
       if (lineState !== LineState.ConnectEnd) {
-        return getNewIndentNormal(state.parseState.lineState)(indent + 2);
+        return getNewIndentNormal(
+          state.parseState.lineState,
+          state
+        )(indent + 2);
       }
-      return getNewIndentNormal(state.parseState.lineState)(indent);
+      return getNewIndentNormal(state.parseState.lineState, state)(indent);
     // sifかどうかはindentで分岐している
     case "Normal":
     case "Sif":
@@ -332,14 +334,17 @@ export function getNewIndent(
 }
 
 export function getNewIndentNormal(
-  lineState: LineState
+  lineState: LineState,
+  state: { indentCommentRow: boolean }
 ): (indent: number) => number | null {
   switch (lineState) {
     // 空行はインデント0へ
     case LineState.Empty:
       return (_) => 0;
-    // コメント行は面倒だからインデント外へ
     case LineState.Comment:
+      if (state.indentCommentRow) {
+        return (i) => i;
+      }
       return (_) => null;
     // 普通の行はインデントが変わらない
     case LineState.Normal:
@@ -613,3 +618,7 @@ export const getNextNewLineIndent = (state: IndentState): number | null => {
   }
   return getNewIndent(LineState.Normal, state);
 };
+
+export interface EraIndenterConfig {
+  get<T>(section: string, defaultValue: T): T;
+}
