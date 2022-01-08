@@ -5,6 +5,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.4.0] - 2021-01-0
+### Added
+- Added new option "indentCommentRow" by [@coeracanth](https://github.com/coeracanth), read the description for details.
+- Now this extension is bundled by esbuild.
+### Fixed
+- Update packages.
+
 ## [0.3.0] - 2020-07-05
 the version number conforms to the SemVer update code.
 Version 0.2.0 was lost due to operation mistake.
