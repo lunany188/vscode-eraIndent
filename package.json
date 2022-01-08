@@ -28,13 +28,16 @@
   ],
   "main": "./out/extension.js",
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "npm run clean && npm run compile:ts",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "vscode:prepublish": "npm run lint && npm run clean && npm run esbuild-base -- --minify",
+    "compile": "npm run clean && npm run compile:esbuild",
+    "compile:esbuild": "npm run esbuild-base -- --sourcemap",
     "compile:ts": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "watch": "npm run clean && tsc -watch -p ./",
+    "lint:ts": "tsc -p ./ --noEmit",
     "lint:prettier": "prettier --write ./src",
     "lint:eslint": "eslint --fix ./src",
-    "lint": "npm run lint:eslint && npm run lint:prettier",
+    "lint": "npm run lint:ts && npm run lint:eslint && npm run lint:prettier",
     "clean": "rimraf out"
   },
   "extensionDependencies": [
@@ -45,6 +48,7 @@
     "@types/vscode": "^1.63.1",
     "@typescript-eslint/eslint-plugin": "^5.9.0",
     "@typescript-eslint/parser": "^5.9.0",
+    "esbuild": "^0.14.10",
     "eslint": "^8.6.0",
     "eslint-config-prettier": "^8.3.0",
     "prettier": "^2.5.1",

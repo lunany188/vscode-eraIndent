@@ -11,7 +11,9 @@
 		"rootDir": "src",
 		/* enable all strict type-checking options */
 		"strict": true,
-		"exactOptionalPropertyTypes": true
+		"exactOptionalPropertyTypes": true,
+		"isolatedModules": true,
+		"esModuleInterop": true
 	},
 	"exclude": [
 		"node_modules",
