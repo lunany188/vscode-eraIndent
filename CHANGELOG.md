@@ -5,7 +5,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-## [0.4.0] - 2021-01-0
+## [0.4.0] - 2021-01-08
 ### Added
 - Added new option "indentCommentRow" by [@coeracanth](https://github.com/coeracanth), read the description for details.
 - Now this extension is bundled by esbuild.
