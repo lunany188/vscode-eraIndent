@@ -9,9 +9,9 @@
 		],
 		"sourceMap": true,
 		"rootDir": "src",
-    /* enable all strict type-checking options */
+		/* enable all strict type-checking options */
 		"strict": true,
-    "exactOptionalPropertyTypes": true
+		"exactOptionalPropertyTypes": true
 	},
 	"exclude": [
 		"node_modules",

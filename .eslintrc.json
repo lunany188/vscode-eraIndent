@@ -1,5 +1,5 @@
 {
-    "$schema":"https://json.schemastore.org/eslintrc",
+    "$schema": "https://json.schemastore.org/eslintrc",
     "extends": [
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",

@@ -1,66 +1,66 @@
 {
-	"name": "eraindent",
-	"displayName": "eraIndent",
-	"description": "Indent formatter for EraBasic",
-	"version": "0.3.0",
-	"publisher": "lunany188",
-	"license": "CC0-1.0",
-	"homepage": "https://github.com/lunany188/eraIndent/blob/master/README.md",
-	"bugs": {
-		"url": "https://github.com/lunany188/eraIndent/issues",
-		"email": "lunany188@gmail.com"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/lunany188/eraIndent.git"
-	},
-	"engines": {
-		"vscode": "^1.30.0"
-	},
-	"categories": [
-		"Formatters"
-	],
-	"keywords": [
-		"erabasic"
-	],
-	"activationEvents": [
-		"onLanguage:erabasic"
-	],
-	"main": "./out/extension.js",
-	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"compile": "npm run clean && npm run compile:ts",
-		"compile:ts": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
-		"lint:prettier": "prettier --write ./src",
-		"lint:eslint": "eslint --fix ./src",
-		"lint": "npm run lint:eslint && npm run lint:prettier",
-		"clean":"rimraf out"
-	},
-	"extensionDependencies": [
-		"sasami.erabasic"
-	],
-	"devDependencies": {
-		"@types/node": "^17.0.8",
-		"@types/vscode": "^1.63.1",
-		"@typescript-eslint/eslint-plugin": "^5.9.0",
-		"@typescript-eslint/parser": "^5.9.0",
-		"eslint": "^8.6.0",
-		"eslint-config-prettier": "^8.3.0",
-		"prettier": "^2.5.1",
-		"rimraf": "^3.0.2",
-		"typescript": "^4.5.4"
-	},
-	"contributes": {
-		"configuration": {
-			"title": "eraindent",
-			"properties": {
-				"eraindent.indentCommentRow": {
-					"default": false,
-					"type": "boolean",
-					"description": "Enable to indent at comment row. The context of comments is ignored and follows the indentation in the code."
-				}
-			}
-		}
-	}
+  "name": "eraindent",
+  "displayName": "eraIndent",
+  "description": "Indent formatter for EraBasic",
+  "version": "0.3.0",
+  "publisher": "lunany188",
+  "license": "CC0-1.0",
+  "homepage": "https://github.com/lunany188/eraIndent/blob/master/README.md",
+  "bugs": {
+    "url": "https://github.com/lunany188/eraIndent/issues",
+    "email": "lunany188@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lunany188/eraIndent.git"
+  },
+  "engines": {
+    "vscode": "^1.30.0"
+  },
+  "categories": [
+    "Formatters"
+  ],
+  "keywords": [
+    "erabasic"
+  ],
+  "activationEvents": [
+    "onLanguage:erabasic"
+  ],
+  "main": "./out/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "npm run clean && npm run compile:ts",
+    "compile:ts": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint:prettier": "prettier --write ./src",
+    "lint:eslint": "eslint --fix ./src",
+    "lint": "npm run lint:eslint && npm run lint:prettier",
+    "clean": "rimraf out"
+  },
+  "extensionDependencies": [
+    "sasami.erabasic"
+  ],
+  "devDependencies": {
+    "@types/node": "^17.0.8",
+    "@types/vscode": "^1.63.1",
+    "@typescript-eslint/eslint-plugin": "^5.9.0",
+    "@typescript-eslint/parser": "^5.9.0",
+    "eslint": "^8.6.0",
+    "eslint-config-prettier": "^8.3.0",
+    "prettier": "^2.5.1",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.5.4"
+  },
+  "contributes": {
+    "configuration": {
+      "title": "eraindent",
+      "properties": {
+        "eraindent.indentCommentRow": {
+          "default": false,
+          "type": "boolean",
+          "description": "Enable to indent at comment row. The context of comments is ignored and follows the indentation in the code."
+        }
+      }
+    }
+  }
 }
