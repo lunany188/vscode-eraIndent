@@ -30,7 +30,10 @@
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./"
+		"watch": "tsc -watch -p ./",
+		"lint:prettier": "prettier --write ./src",
+		"lint:eslint": "eslint --fix ./src",
+		"lint": "npm run lint:eslint && npm run lint:prettier"
 	},
 	"extensionDependencies": [
 		"sasami.erabasic"

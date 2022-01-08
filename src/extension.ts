@@ -12,7 +12,8 @@ export class EraIndentProvider
   implements
     vscode.DocumentFormattingEditProvider,
     vscode.DocumentRangeFormattingEditProvider,
-    vscode.OnTypeFormattingEditProvider {
+    vscode.OnTypeFormattingEditProvider
+{
   private diagonostics: vscode.DiagnosticCollection;
   constructor(diagnostics: vscode.DiagnosticCollection) {
     this.diagonostics = diagnostics;
@@ -109,16 +110,16 @@ export class EraIndentProvider
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   const eraSelector = { language: "erabasic", scheme: "file" };
-  const diagnostics = vscode.languages.createDiagnosticCollection(
-    "erabasicIndenter"
-  );
+  const diagnostics =
+    vscode.languages.createDiagnosticCollection("erabasicIndenter");
   context.subscriptions.push(diagnostics);
   const provider = new EraIndentProvider(diagnostics);
 
-  const rangeFormatter = vscode.languages.registerDocumentRangeFormattingEditProvider(
-    eraSelector,
-    provider
-  );
+  const rangeFormatter =
+    vscode.languages.registerDocumentRangeFormattingEditProvider(
+      eraSelector,
+      provider
+    );
   context.subscriptions.push(rangeFormatter);
   const onTypeFormatter = vscode.languages.registerOnTypeFormattingEditProvider(
     eraSelector,
@@ -129,4 +130,6 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+  // empty
+}

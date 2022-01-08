@@ -74,7 +74,7 @@ export interface IndentState {
 export const makeIndentState = (
   o: EraIndentorOptions,
   c: EraIndenterConfig,
-  i: number = 0,
+  i = 0,
   p: ParseState = { kind: "Normal" }
 ): IndentState => {
   return {
@@ -129,7 +129,9 @@ export const makeEraIndenterError = (
 ): EraIndenterError => {
   return { kind: "EraIndenterError", lineNumber: line, message: message };
 };
-export function isEraIndenterError(object: any): object is EraIndenterError {
+export function isEraIndenterError<T>(
+  object: T | EraIndenterError
+): object is EraIndenterError {
   return "kind" in object && object.kind === "EraIndenterError";
 }
 
@@ -267,7 +269,7 @@ export function setIndents(
   lineState: LineState,
   state: IndentState
 ): Line[] {
-  let ret: Line[] = [];
+  const ret: Line[] = [];
   let depth: number | null = getNewIndent(lineState, state);
   if (depth === null) {
     return [];
@@ -349,6 +351,7 @@ export function getNewIndentNormal(
     // 普通の行はインデントが変わらない
     case LineState.Normal:
     // インデントを増やすときは次の行から
+    // eslint-disable-next-line no-fallthrough
     case LineState.Up:
     case LineState.SelectCase:
     case LineState.Sif:
@@ -544,8 +547,6 @@ export function getNextStateNormal(
       throw new Error(
         "ここは、この拡張のために独自に用意された分類なのでここに来ることはない はず"
       );
-    case LineState.ConnectEnd:
-    case LineState.CommentEnd:
     case LineState.CommentEnd:
       return makeEraIndenterError(
         line.lineNumber,
