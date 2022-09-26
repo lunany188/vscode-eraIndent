@@ -62,7 +62,12 @@
         "eraindent.indentCommentRow": {
           "default": false,
           "type": "boolean",
-          "description": "Enable to indent at comment row. The context of comments is ignored and follows the indentation in the code."
+          "description": "%configuration.indentCommentRow.description%"
+        },
+        "eraindent.indentInsideOfFunction": {
+          "default": false,
+          "type": "boolean",
+          "description": "%configuration.indentInsideOfFunction.description%"
         }
       }
     }

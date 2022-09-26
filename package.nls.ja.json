@@ -1,0 +1,4 @@
+{
+    "configuration.indentCommentRow.description": "コメント行の自動インデントを有効にします。コメントの文脈は考慮されず、コード内のインデントに従います。",
+    "configuration.indentInsideOfFunction.description": "ユーザー定義関数内部の自動インデントを有効にします。"
+}

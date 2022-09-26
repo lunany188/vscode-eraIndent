@@ -1,0 +1,4 @@
+{
+    "configuration.indentCommentRow.description": "Enable to indent at comment row. The context of comments is ignored and follows the indentation in the code.",
+    "configuration.indentInsideOfFunction.description": "Enable to indent at comment row. The context of comments is ignored and follows the indentation in the code."
+}

@@ -69,6 +69,7 @@ export interface IndentState {
   readonly parseState: ParseState;
   readonly options: EraIndentorOptions;
   readonly indentCommentRow: boolean;
+  readonly indentInsideOfFunction: boolean;
 }
 
 export const makeIndentState = (
@@ -82,6 +83,7 @@ export const makeIndentState = (
     parseState: p,
     options: o,
     indentCommentRow: c.get("indentCommentRow", false),
+    indentInsideOfFunction: c.get("indentInsideOfFunction", false),
   };
 };
 
@@ -99,6 +101,7 @@ export interface NormalIndentState {
   readonly parseState: ParseNormal;
   readonly options: EraIndentorOptions;
   readonly indentCommentRow: boolean;
+  readonly indentInsideOfFunction: boolean;
 }
 
 export function isNormalState(state: IndentState): state is NormalIndentState {
@@ -524,6 +527,9 @@ export function getNextStateNormal(
     case LineState.DownUp:
       return state;
     case LineState.Function:
+      if (state.indentInsideOfFunction) {
+        return updateIndentState(state, { indentDepth: 1 });
+      }
       return updateIndentState(state, { indentDepth: 0 });
     case LineState.Up:
       return updateIndentState(state, { indentDepth: state.indentDepth + 1 });
